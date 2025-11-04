@@ -1,0 +1,100 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+# GitHub recommends pinning actions to a commit SHA.
+# To get a newer version, you will need to update the SHA.
+# You can also reference a tag or branch, but the action may change without warning.
+
+name: Release
+
+on:
+  push:
+    tags: 
+      - "v*.*.*"
+  repository_dispatch:
+    types: [devc-effectiverange,packaging-tools]
+    
+jobs:
+
+  extract_params:
+    name: Extract Params
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.extract.outputs.version }}
+      base_image_version: ${{ steps.base_image.outputs.base_image_version }}
+    steps:
+      - name: Determine release version
+        id: extract
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "repository_dispatch" ]]; then
+            git fetch --tags
+            latest_tag=$(git tag --list 'v*.*.*' --sort=-v:refname | head -n 1)
+            if [[ -z "$latest_tag" ]]; then
+              echo "Error: No tags found to bump." >&2
+              exit 1
+            fi
+            IFS='.' read -r major minor patch <<< "${latest_tag#v}"
+            new_patch=$((patch + 1))
+            new_version="${major}.${minor}.${new_patch}"
+            echo "version=$new_version" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          fi
+      - name: Determine base image version
+        id: base_image
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "repository_dispatch" && "${GITHUB_EVENT_TYPE}" == "devc-effectiverange" ]]; then
+            echo "base_image_version=${{ github.event.client_payload.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "base_image_version=latest" >> $GITHUB_OUTPUT
+          fi
+        
+
+  call_build_and_publish_images-armhf-bookworm:
+    needs: extract_params
+    uses: ./.github/workflows/docker-image-single.yml
+    secrets: inherit
+    with:
+      arch: "armhf"
+      base_ver:  ${{needs.extract_params.outputs.base_image_version}}
+      version: ${{needs.extract_params.outputs.version}}
+      distro: "bookworm "
+
+
+  call_build_and_publish_images-arm64-bookworm:
+    needs: extract_params
+    uses: ./.github/workflows/docker-image-single.yml
+    secrets: inherit
+    with:
+      arch: "arm64"
+      base_ver:  ${{needs.extract_params.outputs.base_image_version}}
+      version: ${{needs.extract_params.outputs.version}}
+      distro: "bookworm"
+
+  call_build_and_publish_images-amd64-bookworm:
+    needs: extract_params
+    uses: ./.github/workflows/docker-image-single.yml
+    secrets: inherit
+    with:
+      arch: "amd64"
+      base_ver: ${{needs.extract_params.outputs.base_image_version}}
+      version: ${{needs.extract_params.outputs.version}}
+      distro: "bookworm"
+    
+
+  create_release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      discussions: write
+    needs: [call_build_and_publish_images-armhf-bookworm,call_build_and_publish_images-amd64-bookworm,call_build_and_publish_images-arm64-bookworm]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Release
+        uses: softprops/action-gh-release@v1
+
+

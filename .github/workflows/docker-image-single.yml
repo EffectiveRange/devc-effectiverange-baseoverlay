@@ -1,0 +1,68 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+# GitHub recommends pinning actions to a commit SHA.
+# To get a newer version, you will need to update the SHA.
+# You can also reference a tag or branch, but the action may change without warning.
+
+name: Publish Docker image
+
+on:
+  workflow_call:
+    inputs:
+      arch:
+        required: true
+        type: string
+      base_ver:
+        required: false
+        type: string
+        default: "latest"
+      distro:
+          required: false
+          type: string
+          default: "bookworm"
+      version:
+        required: false
+        type: string
+        default: "latest"
+jobs:
+  build_devc_image:
+    name: Build and push devc image
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: qemu-user qemu-user-static qemu-utils binfmt-support    
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME  }}
+          password: ${{ secrets.DOCKERHUB_TOKEN  }}
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            effectiverange/er-devc-${{ inputs.arch }}-${{ inputs.distro }}
+          tags: |
+            type=raw,value=${{ inputs.version }}
+          flavor: |
+            latest=true
+      - name: Build and push devc Docker images
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          build-args: |
+            BASE_IMAGE_REPO=effectiverange/${{ inputs.arch }}-${{ inputs.distro }}-tools-base
+            BASE_IMAGE_VER=${{ inputs.base_ver }}
+            DEVC_ARCH=${{ inputs.arch }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+        
