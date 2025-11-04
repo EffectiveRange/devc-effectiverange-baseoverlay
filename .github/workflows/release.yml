@@ -60,7 +60,7 @@ jobs:
       arch: "armhf"
       base_ver:  ${{needs.extract_params.outputs.base_image_version}}
       version: ${{needs.extract_params.outputs.version}}
-      distro: "bookworm "
+      distro: "bookworm"
 
 
   call_build_and_publish_images-arm64-bookworm:
