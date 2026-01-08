@@ -83,6 +83,37 @@ jobs:
       version: ${{needs.extract_params.outputs.version}}
       distro: "bookworm"
     
+  call_build_and_publish_images-armhf-trixie:
+    needs: extract_params
+    uses: ./.github/workflows/docker-image-single.yml
+    secrets: inherit
+    with:
+      arch: "armhf"
+      base_ver:  ${{needs.extract_params.outputs.base_image_version}}
+      version: ${{needs.extract_params.outputs.version}}
+      distro: "trixie"
+
+
+  call_build_and_publish_images-arm64-trixie:
+    needs: extract_params
+    uses: ./.github/workflows/docker-image-single.yml
+    secrets: inherit
+    with:
+      arch: "arm64"
+      base_ver:  ${{needs.extract_params.outputs.base_image_version}}
+      version: ${{needs.extract_params.outputs.version}}
+      distro: "trixie"
+
+  call_build_and_publish_images-amd64-trixie:
+    needs: extract_params
+    uses: ./.github/workflows/docker-image-single.yml
+    secrets: inherit
+    with:
+      arch: "amd64"
+      base_ver: ${{needs.extract_params.outputs.base_image_version}}
+      version: ${{needs.extract_params.outputs.version}}
+      distro: "trixie"
+
 
   create_release:
     name: Create Release
@@ -90,7 +121,7 @@ jobs:
     permissions:
       contents: write
       discussions: write
-    needs: [call_build_and_publish_images-armhf-bookworm,call_build_and_publish_images-amd64-bookworm,call_build_and_publish_images-arm64-bookworm]
+    needs: [call_build_and_publish_images-armhf-bookworm,call_build_and_publish_images-amd64-bookworm,call_build_and_publish_images-arm64-bookworm,call_build_and_publish_images-armhf-trixie,call_build_and_publish_images-amd64-trixie,call_build_and_publish_images-arm64-trixie]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
