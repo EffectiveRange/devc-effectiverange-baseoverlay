@@ -3,8 +3,7 @@ ARG BASE_IMAGE_VER=latest
 
 FROM ${BASE_IMAGE_REPO}:${BASE_IMAGE_VER}
 
-RUN apt update && \
-    export DEBIAN_FRONTEND=noninteractive && \
+RUN export DEBIAN_FRONTEND=noninteractive && \
     apt update -y && \
     apt install -y gcc wget python3 python3-pip inetutils-ping openssh-client pkg-config dpkg-dev nano git sudo packaging-tools
 
