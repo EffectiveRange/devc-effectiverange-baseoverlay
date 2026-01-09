@@ -14,7 +14,7 @@ on:
     tags: 
       - "v*.*.*"
   repository_dispatch:
-    types: [devc-effectiverange,packaging-tools]
+    types: [EffectiveRange/devc-effectiverange,EffectiveRange/packaging-tools]
     
 jobs:
 
@@ -127,5 +127,6 @@ jobs:
         uses: actions/checkout@v6
       - name: Release
         uses: softprops/action-gh-release@v2
+
 
 
