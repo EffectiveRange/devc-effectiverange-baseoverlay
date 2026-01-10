@@ -93,12 +93,14 @@ jobs:
     permissions:
       contents: write
       discussions: write
-    needs: [call_build_and_publish_images-armhf-bookworm,call_build_and_publish_images-amd64-bookworm,call_build_and_publish_images-arm64-bookworm,call_build_and_publish_images-armhf-trixie,call_build_and_publish_images-amd64-trixie,call_build_and_publish_images-arm64-trixie]
+    needs: [prepare_release,call_build_and_publish_images-armhf-bookworm,call_build_and_publish_images-amd64-bookworm,call_build_and_publish_images-arm64-bookworm,call_build_and_publish_images-armhf-trixie,call_build_and_publish_images-amd64-trixie,call_build_and_publish_images-arm64-trixie]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
       - name: Release
         uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare_release.outputs.tag }}
 
 
   dispatch_downstream:
