@@ -101,4 +101,13 @@ jobs:
         uses: softprops/action-gh-release@v2
 
 
+  dispatch_downstream:
+    name: Dispatch downstream repo
+    needs: create_release
+    uses: EffectiveRange/ci-workflows/.github/workflows/repository-dispatch.yaml@v1_repodispatch
+    secrets: inherit
+    with:
+      downstream_repo: devc-effectiverange-overlays
+      event_type: ${{ github.repository }}
+      version: ${{ github.ref_name }}    
 
