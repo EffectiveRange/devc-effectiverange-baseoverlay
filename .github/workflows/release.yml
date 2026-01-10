@@ -18,106 +18,10 @@ on:
     
 jobs:
   prepare_release:
-    name: Prepare release (compute vars, optionally tag)
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    concurrency:
-      group: tagging-main
-      cancel-in-progress: false
-    outputs:
-      tag: ${{ steps.out.outputs.tag }}
-      version: ${{ steps.out.outputs.version }}
-      base_image_version: ${{ steps.out.outputs.base_image_version }}
-      dispatch_type: ${{ steps.out.outputs.dispatch_type }}
-    steps:
-      - name: Checkout (full history + tags)
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          fetch-tags: true
-
-      - name: Compute tag/version/base_image_version (and optionally create tag)
-        id: out
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          EVENT="${GITHUB_EVENT_NAME}"
-          dispatch_type=""
-          base_image_version="latest"
-
-          if [[ "$EVENT" == "repository_dispatch" ]]; then
-            dispatch_type="$(jq -r .action "$GITHUB_EVENT_PATH")"
-
-            # base image version policy per dispatch type
-            case "$dispatch_type" in
-              "EffectiveRange/devc-effectiverange")
-                payload_version="$(jq -r '.client_payload.version // empty' "$GITHUB_EVENT_PATH")"
-                if [[ -z "$payload_version" ]]; then
-                  echo "Error: ${dispatch_type} requires client_payload.version" >&2
-                  exit 1
-                fi
-                base_image_version="$payload_version"
-                ;;
-              "EffectiveRange/packaging-tools")
-                base_image_version="latest"
-                ;;
-              *)
-                echo "Error: unexpected repository_dispatch type: ${dispatch_type}" >&2
-                exit 1
-                ;;
-            esac
-
-            # Compute next patch tag based on latest tag merged into origin/main, then bump patch.
-            git fetch origin main --tags --force
-
-            latest_tag="$(git tag --merged origin/main \
-              --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n 1)"
-
-            if [[ -z "${latest_tag}" ]]; then
-              echo "Error: No vX.Y.Z tags found on origin/main to bump." >&2
-              exit 1
-            fi
-
-            IFS='.' read -r major minor patch <<< "${latest_tag#v}"
-            new_patch=$((patch + 1))
-            tag="v${major}.${minor}.${new_patch}"
-
-            echo "Dispatch type:       ${dispatch_type}"
-            echo "Latest tag on main:  ${latest_tag}"
-            echo "New tag to create:   ${tag}"
-            echo "Base image version:  ${base_image_version}"
-
-            # Ensure we're on main HEAD
-            git checkout -B main origin/main
-
-            # HARD FAIL if the computed tag already exists (no reuse)
-            if git ls-remote --tags origin "${tag}" | grep -q "${tag}$"; then
-              echo "Error: tag ${tag} already exists on origin. Refusing to reuse." >&2
-              exit 1
-            fi
-            if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
-              echo "Error: tag ${tag} already exists locally. Refusing to reuse." >&2
-              exit 1
-            fi
-
-            git tag -a "${tag}" -m "Automated patch release ${tag} (${dispatch_type})"
-            git push origin "refs/tags/${tag}"
-
-          else
-            # push tag event
-            tag="${GITHUB_REF#refs/tags/}"
-            base_image_version="latest"
-            echo "Triggered by tag push: ${tag}"
-          fi
-
-          version="${tag#v}"
-
-          echo "dispatch_type=${dispatch_type}" >> "$GITHUB_OUTPUT"
-          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
-          echo "version=${version}" >> "$GITHUB_OUTPUT"
-          echo "base_image_version=${base_image_version}" >> "$GITHUB_OUTPUT"
+    name: Prepare
+    uses: EffectiveRange/ci-workflows/.github/workflows/accept-repository-dispatch.yaml@v1_repodispatch
+    with:
+      versioned_dispatch_type: EffectiveRange/devc-effectiverange
 
 
   call_build_and_publish_images-armhf-bookworm:
@@ -126,7 +30,7 @@ jobs:
     secrets: inherit
     with:
       arch: "armhf"
-      base_ver:  ${{needs.prepare_release.outputs.base_image_version}}
+      base_ver:  ${{needs.prepare_release.outputs.base_version}}
       version: ${{needs.prepare_release.outputs.version}}
       distro: "bookworm"
 
@@ -137,7 +41,7 @@ jobs:
     secrets: inherit
     with:
       arch: "arm64"
-      base_ver:  ${{needs.prepare_release.outputs.base_image_version}}
+      base_ver:  ${{needs.prepare_release.outputs.base_version}}
       version: ${{needs.prepare_release.outputs.version}}
       distro: "bookworm"
 
@@ -147,7 +51,7 @@ jobs:
     secrets: inherit
     with:
       arch: "amd64"
-      base_ver: ${{needs.prepare_release.outputs.base_image_version}}
+      base_ver: ${{needs.prepare_release.outputs.base_version}}
       version: ${{needs.prepare_release.outputs.version}}
       distro: "bookworm"
     
@@ -157,7 +61,7 @@ jobs:
     secrets: inherit
     with:
       arch: "armhf"
-      base_ver:  ${{needs.prepare_release.outputs.base_image_version}}
+      base_ver:  ${{needs.prepare_release.outputs.base_version}}
       version: ${{needs.prepare_release.outputs.version}}
       distro: "trixie"
 
@@ -168,7 +72,7 @@ jobs:
     secrets: inherit
     with:
       arch: "arm64"
-      base_ver:  ${{needs.prepare_release.outputs.base_image_version}}
+      base_ver:  ${{needs.prepare_release.outputs.base_version}}
       version: ${{needs.prepare_release.outputs.version}}
       distro: "trixie"
 
@@ -178,7 +82,7 @@ jobs:
     secrets: inherit
     with:
       arch: "amd64"
-      base_ver: ${{needs.prepare_release.outputs.base_image_version}}
+      base_ver: ${{needs.prepare_release.outputs.base_version}}
       version: ${{needs.prepare_release.outputs.version}}
       distro: "trixie"
 
