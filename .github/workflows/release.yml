@@ -31,7 +31,7 @@ jobs:
     with:
       arch: "armhf"
       base_ver:  ${{needs.prepare_release.outputs.base_version}}
-      version: ${{needs.prepare_release.outputs.version}}
+      version: ${{needs.prepare_release.outputs.tag}}
       distro: "bookworm"
 
 
@@ -42,7 +42,7 @@ jobs:
     with:
       arch: "arm64"
       base_ver:  ${{needs.prepare_release.outputs.base_version}}
-      version: ${{needs.prepare_release.outputs.version}}
+      version: ${{needs.prepare_release.outputs.tag}}
       distro: "bookworm"
 
   call_build_and_publish_images-amd64-bookworm:
@@ -52,7 +52,7 @@ jobs:
     with:
       arch: "amd64"
       base_ver: ${{needs.prepare_release.outputs.base_version}}
-      version: ${{needs.prepare_release.outputs.version}}
+      version: ${{needs.prepare_release.outputs.tag}}
       distro: "bookworm"
     
   call_build_and_publish_images-armhf-trixie:
@@ -62,7 +62,7 @@ jobs:
     with:
       arch: "armhf"
       base_ver:  ${{needs.prepare_release.outputs.base_version}}
-      version: ${{needs.prepare_release.outputs.version}}
+      version: ${{needs.prepare_release.outputs.tag}}
       distro: "trixie"
 
 
@@ -73,7 +73,7 @@ jobs:
     with:
       arch: "arm64"
       base_ver:  ${{needs.prepare_release.outputs.base_version}}
-      version: ${{needs.prepare_release.outputs.version}}
+      version: ${{needs.prepare_release.outputs.tag}}
       distro: "trixie"
 
   call_build_and_publish_images-amd64-trixie:
@@ -83,7 +83,7 @@ jobs:
     with:
       arch: "amd64"
       base_ver: ${{needs.prepare_release.outputs.base_version}}
-      version: ${{needs.prepare_release.outputs.version}}
+      version: ${{needs.prepare_release.outputs.tag}}
       distro: "trixie"
 
 
