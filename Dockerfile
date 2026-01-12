@@ -1,8 +1,10 @@
 ARG BASE_IMAGE_REPO=effectiverange/armhf-bookworm-tools-base
 ARG BASE_IMAGE_VER=latest
-ARG PACKAGING_TOOLS_VER=latest
 
 FROM ${BASE_IMAGE_REPO}:${BASE_IMAGE_VER}
+
+ARG PACKAGING_TOOLS_VER=latest
+ENV PACKAGING_TOOLS_VER=${PACKAGING_TOOLS_VER}
 
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt_update -y && \
