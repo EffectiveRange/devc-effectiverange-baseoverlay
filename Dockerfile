@@ -15,7 +15,7 @@ RUN . /etc/os-release && \
         apt_install -y packaging-tools; \
     else \
         wget -O /tmp/packaging-tools.deb \
-        "https://github.com/EffectiveRange/packaging-tools/releases/download/${PACKAGING_TOOLS_VER}/${VERSION_CODENAME}_packaging-tools_${PACKAGING_TOOLS_VER}_all.deb" && \
+        "https://github.com/EffectiveRange/packaging-tools/releases/download/${PACKAGING_TOOLS_VER}/${VERSION_CODENAME}_packaging-tools_${PACKAGING_TOOLS_VER#v}-1_all.deb" && \
         apt install -y /tmp/packaging-tools.deb && \
         rm -f /tmp/packaging-tools.deb; \
     fi
