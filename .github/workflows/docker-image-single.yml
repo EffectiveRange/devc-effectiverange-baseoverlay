@@ -27,6 +27,10 @@ on:
         required: false
         type: string
         default: "latest"
+      packaging_tools_ver:
+        required: false
+        type: string
+        default: "latest"
 jobs:
   build_devc_image:
     name: Build and push devc image
@@ -63,6 +67,7 @@ jobs:
             BASE_IMAGE_REPO=effectiverange/${{ inputs.arch }}-${{ inputs.distro }}-tools-base
             BASE_IMAGE_VER=${{ inputs.base_ver }}
             DEVC_ARCH=${{ inputs.arch }}
+            PACKAGING_TOOLS_VER=${{ inputs.packaging_tools_ver }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
         
