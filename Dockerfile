@@ -23,7 +23,7 @@ RUN . /etc/os-release && \
     fi
 
 # Download xdrvmake wheel from GitHub releases and install it
-RUN set -euxo pipefail; \
+RUN set -eux -o pipefail; \
     REPO="EffectiveRange/python-xdrvmake"; \
     VER="${XDRVMAKE_VER}"; \
     \
@@ -41,12 +41,11 @@ RUN set -euxo pipefail; \
       | head -n1)"; \
     test -n "$WHEEL_URL"; \
     \
-    retry curl -fL --retry 5 --retry-delay 1 -o /tmp/xdrvmake.whl "$WHEEL_URL"; \
-    pipx install --global /tmp/xdrvmake.whl; \
+    pipx install --global "$WHEEL_URL"; \
     rm -f /tmp/xdrvmake.whl
 
 # Set up start script
-COPY --chown=crossbuilder:crossbuilder ./start.sh /home/crossbuilder/start.sh
+COPY --chmod=777 --chown=crossbuilder:crossbuilder ./start.sh /home/crossbuilder/start.sh
 WORKDIR "/home/crossbuilder"
 
 CMD ["/home/crossbuilder/start.sh"]
