@@ -10,7 +10,7 @@ ENV XDRVMAKE_VER=${XDRVMAKE_VER}
 
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt_update -y && \
-    apt_install -y gcc wget python3 python3-pip inetutils-ping openssh-client pkg-config dpkg-dev nano git sudo
+    apt_install -y gcc wget python3 python3-pip inetutils-ping openssh-client pkg-config dpkg-dev nano git sudo jq
 
 RUN . /etc/os-release && \
     if [ "${PACKAGING_TOOLS_VER}" = "latest" ]; then \
@@ -23,7 +23,7 @@ RUN . /etc/os-release && \
     fi
 
 # Download xdrvmake wheel from GitHub releases and install it
-RUN set -eux; \
+RUN set -euxo pipefail; \
     REPO="EffectiveRange/python-xdrvmake"; \
     VER="${XDRVMAKE_VER}"; \
     \
