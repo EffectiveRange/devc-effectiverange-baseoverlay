@@ -23,7 +23,7 @@ RUN . /etc/os-release && \
     fi
 
 # Download xdrvmake wheel from GitHub releases and install it
-RUN set -eux -o pipefail; \
+RUN set -eux; \
     REPO="EffectiveRange/python-xdrvmake"; \
     VER="${XDRVMAKE_VER}"; \
     \
