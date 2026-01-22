@@ -11,11 +11,16 @@ name: Release
 
 on:
   push:
-    tags: 
+    tags:
       - "v*.*.*"
   repository_dispatch:
-    types: [EffectiveRange/devc-effectiverange,EffectiveRange/packaging-tools]
-    
+    types:
+      [
+        EffectiveRange/devc-effectiverange,
+        EffectiveRange/packaging-tools,
+        EffectiveRange/python-xdrvmake,
+      ]
+
 jobs:
   prepare_release:
     name: Prepare
@@ -39,31 +44,47 @@ jobs:
             echo "packaging_tools_ver=latest" >> $GITHUB_OUTPUT
           fi
 
+  prepare_xdrvmake_ver:
+    name: Prepare xdrvmake Version
+    runs-on: ubuntu-latest
+    needs: prepare_release
+    outputs:
+      xdrvmake_ver: ${{ steps.set_xdrvmake_ver.outputs.xdrvmake_ver }}
+    steps:
+      - name: Set xdrvmake Version
+        id: set_xdrvmake_ver
+        run: |
+          if [ "${{ needs.prepare_release.outputs.dispatch_type}}" == "EffectiveRange/python-xdrvmake" ]; then
+            echo "xdrvmake_ver=${{ needs.prepare_release.outputs.payload_version }}" >> $GITHUB_OUTPUT
+          else
+            echo "xdrvmake_ver=latest" >> $GITHUB_OUTPUT
+          fi
   call_build_and_publish_images-armhf-bookworm:
-    needs: [prepare_release,prepare_packaging_tools_ver]
+    needs: [prepare_release, prepare_packaging_tools_ver, prepare_xdrvmake_ver]
     uses: ./.github/workflows/docker-image-single.yml
     secrets: inherit
     with:
       arch: "armhf"
-      base_ver:  ${{needs.prepare_release.outputs.base_version}}
+      base_ver: ${{needs.prepare_release.outputs.base_version}}
       version: ${{needs.prepare_release.outputs.tag}}
       distro: "bookworm"
       packaging_tools_ver: ${{needs.prepare_packaging_tools_ver.outputs.packaging_tools_ver}}
-
+      xdrvmake_ver: ${{needs.prepare_xdrvmake_ver.outputs.xdrvmake_ver}}
 
   call_build_and_publish_images-arm64-bookworm:
-    needs: [prepare_release,prepare_packaging_tools_ver]
+    needs: [prepare_release, prepare_packaging_tools_ver, prepare_xdrvmake_ver]
     uses: ./.github/workflows/docker-image-single.yml
     secrets: inherit
     with:
       arch: "arm64"
-      base_ver:  ${{needs.prepare_release.outputs.base_version}}
+      base_ver: ${{needs.prepare_release.outputs.base_version}}
       version: ${{needs.prepare_release.outputs.tag}}
       distro: "bookworm"
       packaging_tools_ver: ${{needs.prepare_packaging_tools_ver.outputs.packaging_tools_ver}}
+      xdrvmake_ver: ${{needs.prepare_xdrvmake_ver.outputs.xdrvmake_ver}}
 
   call_build_and_publish_images-amd64-bookworm:
-    needs: [prepare_release,prepare_packaging_tools_ver]
+    needs: [prepare_release, prepare_packaging_tools_ver, prepare_xdrvmake_ver]
     uses: ./.github/workflows/docker-image-single.yml
     secrets: inherit
     with:
@@ -72,32 +93,34 @@ jobs:
       version: ${{needs.prepare_release.outputs.tag}}
       distro: "bookworm"
       packaging_tools_ver: ${{needs.prepare_packaging_tools_ver.outputs.packaging_tools_ver}}
-    
+      xdrvmake_ver: ${{needs.prepare_xdrvmake_ver.outputs.xdrvmake_ver}}
+
   call_build_and_publish_images-armhf-trixie:
-    needs: [prepare_release,prepare_packaging_tools_ver]
+    needs: [prepare_release, prepare_packaging_tools_ver, prepare_xdrvmake_ver]
     uses: ./.github/workflows/docker-image-single.yml
     secrets: inherit
     with:
       arch: "armhf"
-      base_ver:  ${{needs.prepare_release.outputs.base_version}}
+      base_ver: ${{needs.prepare_release.outputs.base_version}}
       version: ${{needs.prepare_release.outputs.tag}}
       distro: "trixie"
       packaging_tools_ver: ${{needs.prepare_packaging_tools_ver.outputs.packaging_tools_ver}}
-
+      xdrvmake_ver: ${{needs.prepare_xdrvmake_ver.outputs.xdrvmake_ver}}
 
   call_build_and_publish_images-arm64-trixie:
-    needs: [prepare_release,prepare_packaging_tools_ver]
+    needs: [prepare_release, prepare_packaging_tools_ver, prepare_xdrvmake_ver]
     uses: ./.github/workflows/docker-image-single.yml
     secrets: inherit
     with:
       arch: "arm64"
-      base_ver:  ${{needs.prepare_release.outputs.base_version}}
+      base_ver: ${{needs.prepare_release.outputs.base_version}}
       version: ${{needs.prepare_release.outputs.tag}}
       distro: "trixie"
       packaging_tools_ver: ${{needs.prepare_packaging_tools_ver.outputs.packaging_tools_ver}}
+      xdrvmake_ver: ${{needs.prepare_xdrvmake_ver.outputs.xdrvmake_ver}}
 
   call_build_and_publish_images-amd64-trixie:
-    needs: [prepare_release,prepare_packaging_tools_ver]
+    needs: [prepare_release, prepare_packaging_tools_ver, prepare_xdrvmake_ver]
     uses: ./.github/workflows/docker-image-single.yml
     secrets: inherit
     with:
@@ -106,7 +129,7 @@ jobs:
       version: ${{needs.prepare_release.outputs.tag}}
       distro: "trixie"
       packaging_tools_ver: ${{needs.prepare_packaging_tools_ver.outputs.packaging_tools_ver}}
-
+      xdrvmake_ver: ${{needs.prepare_xdrvmake_ver.outputs.xdrvmake_ver}}
 
   create_release:
     name: Create Release
@@ -114,7 +137,16 @@ jobs:
     permissions:
       contents: write
       discussions: write
-    needs: [prepare_release,call_build_and_publish_images-armhf-bookworm,call_build_and_publish_images-amd64-bookworm,call_build_and_publish_images-arm64-bookworm,call_build_and_publish_images-armhf-trixie,call_build_and_publish_images-amd64-trixie,call_build_and_publish_images-arm64-trixie]
+    needs:
+      [
+        prepare_release,
+        call_build_and_publish_images-armhf-bookworm,
+        call_build_and_publish_images-amd64-bookworm,
+        call_build_and_publish_images-arm64-bookworm,
+        call_build_and_publish_images-armhf-trixie,
+        call_build_and_publish_images-amd64-trixie,
+        call_build_and_publish_images-arm64-trixie,
+      ]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -123,14 +155,12 @@ jobs:
         with:
           tag_name: ${{ needs.prepare_release.outputs.tag }}
 
-
   dispatch_downstream:
     name: Dispatch downstream repo
-    needs: [prepare_release,create_release]
+    needs: [prepare_release, create_release]
     uses: EffectiveRange/ci-workflows/.github/workflows/repository-dispatch.yaml@v1_repodispatch
     secrets: inherit
     with:
       downstream_repo: devc-effectiverange-overlays
       event_type: ${{ github.repository }}
-      version: ${{ needs.prepare_release.outputs.tag }}    
-
+      version: ${{ needs.prepare_release.outputs.tag }}

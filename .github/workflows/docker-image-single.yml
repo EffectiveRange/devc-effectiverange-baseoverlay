@@ -20,14 +20,18 @@ on:
         type: string
         default: "latest"
       distro:
-          required: false
-          type: string
-          default: "bookworm"
+        required: false
+        type: string
+        default: "bookworm"
       version:
         required: false
         type: string
         default: "latest"
       packaging_tools_ver:
+        required: false
+        type: string
+        default: "latest"
+      xdrvmake_ver:
         required: false
         type: string
         default: "latest"
@@ -42,7 +46,7 @@ jobs:
         uses: actions/checkout@v6
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: qemu-user qemu-user-static qemu-utils binfmt-support    
+          packages: qemu-user qemu-user-static qemu-utils binfmt-support
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -68,6 +72,6 @@ jobs:
             BASE_IMAGE_VER=${{ inputs.base_ver }}
             DEVC_ARCH=${{ inputs.arch }}
             PACKAGING_TOOLS_VER=${{ inputs.packaging_tools_ver }}
+            XDRVMAKE_VER=${{ inputs.xdrvmake_ver }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-        

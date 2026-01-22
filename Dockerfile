@@ -4,7 +4,9 @@ ARG BASE_IMAGE_VER=latest
 FROM ${BASE_IMAGE_REPO}:${BASE_IMAGE_VER}
 
 ARG PACKAGING_TOOLS_VER=latest
+ARG XDRVMAKE_VER=latest
 ENV PACKAGING_TOOLS_VER=${PACKAGING_TOOLS_VER}
+ENV XDRVMAKE_VER=${XDRVMAKE_VER}
 
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt_update -y && \
@@ -19,6 +21,29 @@ RUN . /etc/os-release && \
         apt install -y /tmp/packaging-tools.deb && \
         rm -f /tmp/packaging-tools.deb; \
     fi
+
+# Download xdrvmake wheel from GitHub releases and install it
+RUN set -eux; \
+    REPO="EffectiveRange/python-xdrvmake"; \
+    VER="${XDRVMAKE_VER}"; \
+    \
+    if [ "$VER" = "latest" ]; then \
+      API="https://api.github.com/repos/${REPO}/releases/latest"; \
+    else \
+      # Accept both "0.3.1" and "v0.3.1"
+      case "$VER" in v*) TAG="$VER" ;; *) TAG="v$VER" ;; esac; \
+      API="https://api.github.com/repos/${REPO}/releases/tags/${TAG}"; \
+    fi; \
+    \
+    # Pick the wheel asset you want. If you publish multiple wheels, tighten this selector.
+    WHEEL_URL="$(curl -fsSL "$API" \
+      | jq -r '.assets[] | select(.name | endswith(".whl")) | .browser_download_url' \
+      | head -n1)"; \
+    test -n "$WHEEL_URL"; \
+    \
+    retry curl -fL --retry 5 --retry-delay 1 -o /tmp/xdrvmake.whl "$WHEEL_URL"; \
+    pipx install --global /tmp/xdrvmake.whl; \
+    rm -f /tmp/xdrvmake.whl
 
 # Set up start script
 COPY --chown=crossbuilder:crossbuilder ./start.sh /home/crossbuilder/start.sh
